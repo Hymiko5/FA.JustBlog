@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JustBlog.MVC", "JustBlog.MV
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FA.JustBlog", "FA.JustBlog\FA.JustBlog.csproj", "{5346F59B-B056-4408-91FB-AEB01C1E148C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DB", "DB", "{DE573B16-23D2-4EF6-909C-0606F7EF93CE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
