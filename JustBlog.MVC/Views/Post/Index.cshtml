@@ -1,0 +1,130 @@
+﻿@model IEnumerable<Post>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    var postQuery = new PostQuery();
+}
+<h1>Index</h1>
+
+<form asp-action="index" method="post">
+    <div class="form-group form-check">
+        <label class="form-check-label">
+            <input class="form-check-input" asp-for="@postQuery.Published" /> Published
+        </label>
+    </div>
+    <div class="form-group">
+    <label asp-for="@postQuery.LatestPostSize" class="control-label"></label>
+        <input asp-for="@postQuery.LatestPostSize" class="form-control" />
+        <span asp-validation-for="@postQuery.LatestPostSize" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+    <label asp-for="@postQuery.YearMonth" class="control-label"></label>
+        <input asp-for="@postQuery.YearMonth" class="form-control" />
+        <span asp-validation-for="@postQuery.YearMonth" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="@postQuery.UrlSlug" class="control-label"></label>
+        <input asp-for="@postQuery.UrlSlug" class="form-control" />
+        <span asp-validation-for="@postQuery.UrlSlug" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="@postQuery.Category"></label>
+        <select asp-for="@postQuery.Category" asp-items="@(ViewData["CategoryList"] as IEnumerable<SelectListItem>)" class="form-control">
+            <option value="">Select Category</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label asp-for="@postQuery.Tag"></label>
+        <select asp-for="@postQuery.Tag" asp-items="@(ViewData["TagList"] as IEnumerable<SelectListItem>)" class="form-control">
+            <option value="">Select Category</option>
+        </select>
+    </div>
+    <div class="form-group">
+                <input type="submit" value="Filter" class="btn btn-primary" />
+    </div>
+</form>
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ShortDescription)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PostContent)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UrlSlug)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Published)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PostedOn)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Modified)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Category)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ViewCount)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.RateCount)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalRate)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">@Html.DisplayNameFor(model => model.Title)</a>
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ShortDescription)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PostContent)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UrlSlug)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Published)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PostedOn)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Modified)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Category.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ViewCount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.RateCount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalRate)
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

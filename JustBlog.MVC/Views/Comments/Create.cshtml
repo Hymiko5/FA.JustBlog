@@ -1,0 +1,57 @@
+﻿@model CommentModel
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Create</h1>
+
+<h4>Comments</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div class="form-group">
+                <label asp-for="PostId"></label>
+                <select asp-for="PostId" asp-items="@(ViewData["PostList"] as IEnumerable<SelectListItem>)" class="form-control">
+                    <option value="">Select a Post</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label asp-for="CommentName" class="control-label"></label>
+                <input asp-for="CommentName" class="form-control" />
+                <span asp-validation-for="CommentName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CommentEmail" class="control-label"></label>
+                <input asp-for="CommentEmail" class="form-control" />
+                <span asp-validation-for="CommentEmail" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CommentTitle" class="control-label"></label>
+                <input asp-for="CommentTitle" class="form-control" />
+                <span asp-validation-for="CommentTitle" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CommentBody" class="control-label"></label>
+                <input asp-for="CommentBody" class="form-control" />
+                <span asp-validation-for="CommentBody" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

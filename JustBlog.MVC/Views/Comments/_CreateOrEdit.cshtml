@@ -1,0 +1,36 @@
+﻿@model Comment
+
+
+@{
+}
+<div class="form-group">
+    <label asp-for="Name" class="control-label"></label>
+    <input asp-for="Name" class="form-control" />
+    <span asp-validation-for="Name" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <label asp-for="Email" class="control-label"></label>
+    <input asp-for="Email" class="form-control" />
+    <span asp-validation-for="Email" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <label asp-for="CommentHeader" class="control-label"></label>
+    <input asp-for="CommentHeader" class="form-control" />
+    <span asp-validation-for="CommentHeader" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <label asp-for="CommentText" class="control-label"></label>
+    <input asp-for="CommentText" class="form-control" />
+    <span asp-validation-for="CommentText" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <label asp-for="CommentTime" class="control-label"></label>
+    <input asp-for="CommentTime" class="form-control" />
+    <span asp-validation-for="CommentTime" class="text-danger"></span>
+</div>
+<div class="form-group">
+        <label asp-for="Post"></label>
+    <select asp-for="PostId" asp-items="@(ViewData["PostList"] as IEnumerable<SelectListItem>)" class="form-control">
+            <option value="">Select a Post</option>
+        </select>
+</div>
