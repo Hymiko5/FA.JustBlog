@@ -1,6 +1,7 @@
 using FA.JustBlog.Core.Models;
 using FA.JustBlog.Core.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace JustBlog.MVC
 {
@@ -19,7 +20,6 @@ namespace JustBlog.MVC
             builder.Services.AddScoped<IPostRepository, PostRepository>();
             builder.Services.AddScoped<ICommentRepository, CommentRepository>();
             builder.Services.AddAutoMapper(typeof(Program).Assembly);
-
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

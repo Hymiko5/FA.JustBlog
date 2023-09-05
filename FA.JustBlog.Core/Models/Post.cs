@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
@@ -16,34 +17,37 @@ namespace FA.JustBlog.Core.Models
         /// <summary>
         /// Post's title.
         /// </summary>
-        public string Title { get; set; }
+        [Required]
+        [MaxLength(255)]
+        public string? Title { get; set; }
         /// <summary>
         /// Short description.
         /// </summary>
-        [Column("Short Description")]
-        public string ShortDescription { get; set; }
+        [Display(Name ="Short Description")]
+        public string? ShortDescription { get; set; }
         /// <summary>
         /// Post's content.
         /// </summary>
-        [Column("Post Content")]
-        public string PostContent { get; set; }
+        [Display(Name ="Post Content")]
+        public string? PostContent { get; set; }
         /// <summary>
         /// Url Slug.
         /// </summary>
-        public string UrlSlug { get; set; }
+        [MaxLength(255)]
+        public string? UrlSlug { get; set; }
         /// <summary>
         /// is published.
         /// </summary>
-        public bool Published { get; set; }
+        public bool Published { get; set; } = false;
         /// <summary>
         /// Posted date.
         /// </summary>
-        [Column("Posted On")]
+        [Display(Name ="Posted On")]
         public DateTime PostedOn { get; set; }
         /// <summary>
         /// is Modified.
         /// </summary>
-        public bool Modified { get; set; }
+        public bool Modified { get; set; } = false;
         /// <summary>
         /// Category id.
         /// </summary>
@@ -52,7 +56,7 @@ namespace FA.JustBlog.Core.Models
         /// <summary>
         /// Category instance.
         /// </summary>
-        public Category Category { get; set; }
+        public Category? Category { get; set; }
         /// <summary>
         /// Post tag map List.
         /// </summary>
@@ -60,7 +64,7 @@ namespace FA.JustBlog.Core.Models
         /// <summary>
         /// List comment.
         /// </summary>
-        public IList<Comment> Comments { get; set; }
+        public IList<Comment>? Comments { get; set; }
         /// <summary>
         /// Count of the views.
         /// </summary>

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FA.JustBlog.Core.Migrations
 {
     [DbContext(typeof(JustBlogContext))]
-    [Migration("20230903150913_InitialCreate")]
+    [Migration("20230905073301_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -37,10 +37,13 @@ namespace FA.JustBlog.Core.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("UrlSlug")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.HasKey("Id");
 
@@ -79,11 +82,10 @@ namespace FA.JustBlog.Core.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CommentHeader")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("CommentText")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CommentTime")
@@ -91,11 +93,13 @@ namespace FA.JustBlog.Core.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("PostId")
                         .HasColumnType("int");
@@ -122,13 +126,10 @@ namespace FA.JustBlog.Core.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("PostContent")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Post Content");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("PostedOn")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("Posted On");
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("Published")
                         .HasColumnType("bit");
@@ -137,20 +138,19 @@ namespace FA.JustBlog.Core.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ShortDescription")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Short Description");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("TotalRate")
                         .HasColumnType("int");
 
                     b.Property<string>("UrlSlug")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<int>("ViewCount")
                         .HasColumnType("int");
@@ -168,7 +168,7 @@ namespace FA.JustBlog.Core.Migrations
                             CategoryId = 1,
                             Modified = false,
                             PostContent = "Artificial Intelligence (AI) is transforming...",
-                            PostedOn = new DateTime(2023, 8, 27, 22, 9, 12, 884, DateTimeKind.Local).AddTicks(6229),
+                            PostedOn = new DateTime(2023, 8, 29, 14, 33, 1, 151, DateTimeKind.Local).AddTicks(9603),
                             Published = true,
                             RateCount = 0,
                             ShortDescription = "Discover the world of AI and its applications.",
@@ -183,7 +183,7 @@ namespace FA.JustBlog.Core.Migrations
                             CategoryId = 2,
                             Modified = false,
                             PostContent = "Bali is a tropical paradise known for its lush...",
-                            PostedOn = new DateTime(2023, 8, 24, 22, 9, 12, 884, DateTimeKind.Local).AddTicks(6250),
+                            PostedOn = new DateTime(2023, 8, 26, 14, 33, 1, 151, DateTimeKind.Local).AddTicks(9630),
                             Published = true,
                             RateCount = 0,
                             ShortDescription = "A journey through the stunning landscapes of Bali.",
@@ -198,7 +198,7 @@ namespace FA.JustBlog.Core.Migrations
                             CategoryId = 3,
                             Modified = false,
                             PostContent = "Who can resist a moist and decadent chocolate cake...",
-                            PostedOn = new DateTime(2023, 8, 29, 22, 9, 12, 884, DateTimeKind.Local).AddTicks(6253),
+                            PostedOn = new DateTime(2023, 8, 31, 14, 33, 1, 151, DateTimeKind.Local).AddTicks(9637),
                             Published = false,
                             RateCount = 0,
                             ShortDescription = "Indulge in the rich flavors of this chocolate cake.",
@@ -253,16 +253,16 @@ namespace FA.JustBlog.Core.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("UrlSlug")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.HasKey("Id");
 

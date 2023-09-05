@@ -38,11 +38,11 @@ namespace FA.JustBlog.Core.Models
 
         public virtual DbSet<Comment> Comments { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
+        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        //{
 
-            optionsBuilder.UseSqlServer("Server=.;Initial Catalog=JustBlogDB;Trusted_Connection=True;Integrated Security=True;TrustServerCertificate=True;");
-        }
+        //    optionsBuilder.UseSqlServer("Server=.;Initial Catalog=JustBlogDB;Trusted_Connection=True;Integrated Security=True;TrustServerCertificate=True;");
+        //}
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

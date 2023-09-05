@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,15 +16,18 @@ namespace FA.JustBlog.Core.Models
         /// <summary>
         /// Tag's name.
         /// </summary>
-        public string Name { get; set; }
+        [Required]
+        [MaxLength(255)]
+        public string? Name { get; set; }
         /// <summary>
         /// Url Slug.
         /// </summary>
-        public string UrlSlug { get; set; }
+        [MaxLength(255)]
+        public string? UrlSlug { get; set; }
         /// <summary>
         /// Tag's description.
         /// </summary>
-        public string Description { get; set; }
+        public string? Description { get; set; }
         /// <summary>
         /// Count.
         /// </summary>
@@ -31,6 +35,6 @@ namespace FA.JustBlog.Core.Models
         /// <summary>
         /// Post tag map List.
         /// </summary>
-        public IList<PostTagMap> PostTagMaps { get; set; }
+        public IList<PostTagMap>? PostTagMaps { get; set; }
     }
 }

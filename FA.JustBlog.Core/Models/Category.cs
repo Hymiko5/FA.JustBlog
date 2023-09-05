@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,10 +16,13 @@ namespace FA.JustBlog.Core.Models
         /// <summary>
         /// Category name.
         /// </summary>
+        [Required]
+        [MaxLength(255)]
         public string? Name { get; set; }
         /// <summary>
         /// Url Slug.
         /// </summary>
+        [MaxLength(255)]
         public string? UrlSlug { get; set; }
         /// <summary>
         /// Category description.

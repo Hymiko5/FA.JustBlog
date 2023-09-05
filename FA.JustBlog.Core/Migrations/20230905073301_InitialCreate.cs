@@ -19,8 +19,8 @@ namespace FA.JustBlog.Core.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UrlSlug = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    UrlSlug = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -34,9 +34,9 @@ namespace FA.JustBlog.Core.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UrlSlug = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    UrlSlug = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Count = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -50,12 +50,12 @@ namespace FA.JustBlog.Core.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ShortDescription = table.Column<string>(name: "Short Description", type: "nvarchar(max)", nullable: false),
-                    PostContent = table.Column<string>(name: "Post Content", type: "nvarchar(max)", nullable: false),
-                    UrlSlug = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    ShortDescription = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostContent = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UrlSlug = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     Published = table.Column<bool>(type: "bit", nullable: false),
-                    PostedOn = table.Column<DateTime>(name: "Posted On", type: "datetime2", nullable: false),
+                    PostedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Modified = table.Column<bool>(type: "bit", nullable: false),
                     CategoryId = table.Column<int>(type: "int", nullable: false),
                     ViewCount = table.Column<int>(type: "int", nullable: false),
@@ -79,11 +79,11 @@ namespace FA.JustBlog.Core.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     PostId = table.Column<int>(type: "int", nullable: false),
-                    CommentHeader = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CommentText = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CommentHeader = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    CommentText = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CommentTime = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
@@ -143,12 +143,12 @@ namespace FA.JustBlog.Core.Migrations
 
             migrationBuilder.InsertData(
                 table: "Posts",
-                columns: new[] { "Id", "CategoryId", "Modified", "Post Content", "Posted On", "Published", "RateCount", "Short Description", "Title", "TotalRate", "UrlSlug", "ViewCount" },
+                columns: new[] { "Id", "CategoryId", "Modified", "PostContent", "PostedOn", "Published", "RateCount", "ShortDescription", "Title", "TotalRate", "UrlSlug", "ViewCount" },
                 values: new object[,]
                 {
-                    { 1, 1, false, "Artificial Intelligence (AI) is transforming...", new DateTime(2023, 8, 27, 22, 9, 12, 884, DateTimeKind.Local).AddTicks(6229), true, 0, "Discover the world of AI and its applications.", "Introduction to Artificial Intelligence", 0, "introduction-to-ai", 0 },
-                    { 2, 2, false, "Bali is a tropical paradise known for its lush...", new DateTime(2023, 8, 24, 22, 9, 12, 884, DateTimeKind.Local).AddTicks(6250), true, 0, "A journey through the stunning landscapes of Bali.", "Exploring Bali: Paradise on Earth", 0, "exploring-bali", 0 },
-                    { 3, 3, false, "Who can resist a moist and decadent chocolate cake...", new DateTime(2023, 8, 29, 22, 9, 12, 884, DateTimeKind.Local).AddTicks(6253), false, 0, "Indulge in the rich flavors of this chocolate cake.", "Delicious Chocolate Cake Recipe", 0, "chocolate-cake-recipe", 0 }
+                    { 1, 1, false, "Artificial Intelligence (AI) is transforming...", new DateTime(2023, 8, 29, 14, 33, 1, 151, DateTimeKind.Local).AddTicks(9603), true, 0, "Discover the world of AI and its applications.", "Introduction to Artificial Intelligence", 0, "introduction-to-ai", 0 },
+                    { 2, 2, false, "Bali is a tropical paradise known for its lush...", new DateTime(2023, 8, 26, 14, 33, 1, 151, DateTimeKind.Local).AddTicks(9630), true, 0, "A journey through the stunning landscapes of Bali.", "Exploring Bali: Paradise on Earth", 0, "exploring-bali", 0 },
+                    { 3, 3, false, "Who can resist a moist and decadent chocolate cake...", new DateTime(2023, 8, 31, 14, 33, 1, 151, DateTimeKind.Local).AddTicks(9637), false, 0, "Indulge in the rich flavors of this chocolate cake.", "Delicious Chocolate Cake Recipe", 0, "chocolate-cake-recipe", 0 }
                 });
 
             migrationBuilder.InsertData(
