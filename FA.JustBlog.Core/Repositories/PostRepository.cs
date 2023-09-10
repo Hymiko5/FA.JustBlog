@@ -1,4 +1,6 @@
-﻿using FA.JustBlog.Core.Models;
+﻿using FA.JustBlog.Core.BaseServices;
+using FA.JustBlog.Core.Infrastructure;
+using FA.JustBlog.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,129 +9,82 @@ using System.Threading.Tasks;
 
 namespace FA.JustBlog.Core.Repositories
 {
-    public class PostRepository: GenericRepository<Post>, IPostRepository
+    public class PostRepository: BaseService<Post>, IPostRepository
     {
-        private readonly JustBlogContext _context;
-        public PostRepository(JustBlogContext context) :base(context)
+        
+        public PostRepository(IGenericRepository<Post> postRepository, IUnitOfWork unitOfWork) :base(unitOfWork, postRepository)
         {
-            _context = context;
+            
         }
 
-        public Post FindPost(int year, int? month, string? urlSlug)
+        public async Task<Post> FindPostAsync(int year, int? month, string? urlSlug)
         {
-            return _context.Posts.FirstOrDefault(post =>
+            return await unitOfWork.PostRepository.FirstOrDefaultAsync(post =>
                 post.PostedOn.Year == year &&
                 post.PostedOn.Month == month &&
                 post.UrlSlug == urlSlug);
         }
 
-        public Post FindPost(int postId)
+
+        public async Task<IEnumerable<Post>> GetPublishedPostsAsync()
         {
-            return _context.Posts.Find(postId);
+            return await unitOfWork.PostRepository.FindAsync(post => post.Published);
+
+        }
+        public async Task<IEnumerable<Post>> GetUnpublishedPostsAsync()
+        {
+            return await unitOfWork.PostRepository.FindAsync(post => !post.Published);
         }
 
-        public void AddPost(Post post)
+        public async Task<IEnumerable<Post>> GetLatestPostsAsync(int size)
         {
-            if (post == null)
-                throw new ArgumentNullException(nameof(post));
-
-            _context.Posts.Add(post);
-            _context.SaveChanges();
-        }
-
-        public void UpdatePost(Post post)
-        {
-            if (post == null)
-                throw new ArgumentNullException(nameof(post));
-
-            _context.Posts.Update(post);
-            _context.SaveChanges();
-        }
-
-        public void DeletePost(Post post)
-        {
-            if (post != null)
-            {
-                _context.Posts.Remove(post);
-                _context.SaveChanges();
-            }
-        }
-
-        public void DeletePost(int postId)
-        {
-            var postToDelete = _context.Posts.Find(postId);
-            if (postToDelete != null)
-            {
-                _context.Posts.Remove(postToDelete);
-                _context.SaveChanges();
-            }
-        }
-
-        public IList<Post> GetAllPosts()
-        {
-            return _context.Posts.ToList();
-        }
-
-        public IList<Post> GetPublishedPosts()
-        {
-            return _context.Posts.Where(post => post.Published).ToList();
-        }
-        public IList<Post> GetUnpublishedPosts()
-        {
-            return _context.Posts.Where(post => !post.Published).ToList();
-        }
-
-        public IList<Post> GetLatestPosts(int size)
-        {
-            return _context.Posts
-                .Where(post => post.Published)
+            return (await unitOfWork.PostRepository
+                .FindAsync(post => post.Published))
                 .OrderByDescending(post => post.PostedOn)
                 .Take(size)
                 .ToList();
         }
 
-        public IList<Post> GetPostsByMonth(DateTime monthYear)
+        public async Task<IEnumerable<Post>> GetPostsByMonthAsync(DateTime monthYear)
         {
             var startDate = new DateTime(monthYear.Year, monthYear.Month, 1);
             var endDate = startDate.AddMonths(1).AddDays(-1);
 
-            return _context.Posts
-                .Where(post => post.Published && post.PostedOn >= startDate && post.PostedOn <= endDate)
-                .ToList();
+            return await unitOfWork.PostRepository
+                .FindAsync(post => post.Published && post.PostedOn >= startDate && post.PostedOn <= endDate);
         }
 
-        public int CountPostsForCategory(string category)
+        public async Task<int> CountPostsForCategoryAsync(string category)
         {
-            return _context.Posts
-                .Count(post => post.Published && post.Category.Name.Contains(category));
+            return await unitOfWork.PostRepository
+                .CountAsync(post => post.Published && post.Category.Name.Contains(category));
         }
 
-        public IList<Post> GetPostsByCategory(string category)
+        public async Task<IEnumerable<Post>> GetPostsByCategoryAsync(string category)
         {
-            return _context.Posts
-                .Where(post => post.Published && post.Category.Name.Contains(category))
-                .ToList();
+            return await unitOfWork.PostRepository
+                .FindAsync(post => post.Published && post.Category.Name.Contains(category));
         }
 
-        public int CountPostsForTag(string tag)
+        public async Task<int> CountPostsForTagAsync(string tag)
         {
-            return _context.Posts
-                .Count(post => post.Published && post.PostTagMaps.Any(pt => pt.Tag.Name.Contains(tag)));
+            return await unitOfWork.PostRepository
+                .CountAsync(post => post.Published && post.PostTagMaps.Any(pt => pt.Tag.Name.Contains(tag)));
         }
 
-        public IList<Post> GetPostsByTag(string tag)
+        public async Task<IEnumerable<Post>> GetPostsByTagAsync(string tag)
         {
-            return _context.Posts.Where(p => p.PostTagMaps.Any(t => t.Tag.Name.Contains(tag))).ToList();
+            return await unitOfWork.PostRepository.FindAsync(p => p.PostTagMaps.Any(t => t.Tag.Name.Contains(tag)));
         }
 
-        public IList<Post> GetMostViewedPost(int size)
+        public async Task<IEnumerable<Post>> GetMostViewedPostAsync(int size)
         {
-            return _context.Posts.OrderByDescending(p => p.ViewCount).Take(size).ToList();
+            return (await unitOfWork.PostRepository.GetAllAsync()).OrderByDescending(p => p.ViewCount).Take(size).ToList();
         }
 
-        public IList<Post> GetHighestPosts(int size)
+        public async Task<IEnumerable<Post>> GetHighestPostsAsync(int size)
         {
-            return _context.Posts.OrderByDescending(p => p.Rate).Take(size).ToList();
+            return (await unitOfWork.PostRepository.GetAllAsync()).OrderByDescending(p => p.Rate).Take(size).ToList();
         }
     }
 }

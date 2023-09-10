@@ -96,7 +96,7 @@ namespace JustBlog.MVC.Controllers
                 repository.AddPost(post);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(categoryRepository.GetAllCategories(), "Id", "Id", post.CategoryId);
+            ViewData["CategoryId"] = new SelectList(categoryRepository.GetAllCategories(), "Id", "Name", post.CategoryId);
             return View(post);
         }
 
@@ -113,7 +113,7 @@ namespace JustBlog.MVC.Controllers
             {
                 return NotFound();
             }
-            ViewData["CategoryId"] = new SelectList(categoryRepository.GetAllCategories(), "Id", "Id", post.CategoryId);
+            ViewData["CategoryId"] = new SelectList(categoryRepository.GetAllCategories(), "Id", "Name", post!=null?post.CategoryId:0);
             return View(post);
         }
 

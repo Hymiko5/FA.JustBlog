@@ -1,5 +1,8 @@
-﻿using FA.JustBlog.Core.Models;
+﻿using FA.JustBlog.Core.Infrastructure;
+using FA.JustBlog.Core.Models;
 using FA.JustBlog.Core.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,17 +14,30 @@ namespace FA.JustBlog.UnitTest
     public class TagRepoTest
     {
         private JustBlogContext _context;
+        private IGenericRepository<Tag> _genericRepository;
+        private UnitOfWork _unitOfWork;
         private TagRepository _tagRepository;
-
         [SetUp]
-        public void Setup()
+        public async Task Setup()
         {
-            _context = new JustBlogContext();
-            _tagRepository = new TagRepository(_context);
+            // Create an options builder for an in-memory database
+            var options = new DbContextOptionsBuilder<JustBlogContext>()
+                .UseInMemoryDatabase(databaseName: "InMemoryDatabase")
+                .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+                .Options;
+
+            // Create an instance of the in-memory database context
+            _context = new JustBlogContext(options);
+
+            // Initialize the database with test data
+            _context.Database.EnsureCreated();
+            _genericRepository = new GenericRepository<Tag>(_context);
+            _unitOfWork = new UnitOfWork(_context);
+            _tagRepository = new TagRepository(_genericRepository, _unitOfWork);
         }
 
         [Test]
-        public void AddTag_ShouldAddTagToDatabase()
+        public async Task AddTag_ShouldAddTagToDatabase()
         {
             // Arrange
             var tag = new Tag
@@ -33,16 +49,16 @@ namespace FA.JustBlog.UnitTest
             };
 
             // Act
-            _tagRepository.AddTag(tag);
+            await _tagRepository.AddAsync(tag);
 
             // Assert
-            var addedTag = _tagRepository.Find(tag.Id);
+            var addedTag = await _tagRepository.GetByIdAsync(tag.Id);
             Assert.NotNull(addedTag);
             Assert.AreEqual(tag.Name, addedTag.Name);
         }
 
         [Test]
-        public void UpdateTag_ShouldUpdateTagInDatabase()
+        public async Task UpdateTag_ShouldUpdateTagInDatabase()
         {
             // Arrange
             var tag = new Tag
@@ -52,20 +68,20 @@ namespace FA.JustBlog.UnitTest
                 Description = "Test Description",
                 Count = 0
             };
-            _tagRepository.AddTag(tag);
+            await _tagRepository.AddAsync(tag);
 
             // Act
             tag.Name = "UpdatedTag";
-            _tagRepository.UpdateTag(tag);
+            await _tagRepository.UpdateAsync(tag);
 
             // Assert
-            var updatedTag = _tagRepository.Find(tag.Id);
+            var updatedTag = await _tagRepository.GetByIdAsync(tag.Id);
             Assert.NotNull(updatedTag);
             Assert.AreEqual(tag.Name, updatedTag.Name);
         }
 
         [Test]
-        public void DeleteTag_ShouldDeleteTagFromDatabase()
+        public async Task DeleteTag_ShouldDeleteTagFromDatabase()
         {
             // Arrange
             var tag = new Tag
@@ -75,18 +91,18 @@ namespace FA.JustBlog.UnitTest
                 Description = "Test Description",
                 Count = 0
             };
-            _tagRepository.AddTag(tag);
+            await _tagRepository.AddAsync(tag);
 
             // Act
-            _tagRepository.DeleteTag(tag);
+            await _tagRepository.DeleteAsync(tag);
 
             // Assert
-            var deletedTag = _tagRepository.Find(tag.Id);
+            var deletedTag = await _tagRepository.GetByIdAsync(tag.Id);
             Assert.Null(deletedTag);
         }
 
         [Test]
-        public void GetAllTags_ShouldReturnAllTags()
+        public async Task GetAllTags_ShouldReturnAllTags()
         {
             // Arrange
             var tag1 = new Tag
@@ -116,21 +132,21 @@ namespace FA.JustBlog.UnitTest
                 PostTagMaps = new List<PostTagMap>() // Create a list of PostTagMap if needed
             };
 
-            _tagRepository.AddTag(tag1);
-            _tagRepository.AddTag(tag2);
+            await _tagRepository.AddAsync(tag1);
+            await _tagRepository.AddAsync(tag2);
 
             // Act
-            var tags = _tagRepository.GetAllTags();
+            var tags = await _tagRepository.GetAllAsync();
 
             // Assert
-            Assert.AreEqual(_context.Tags.Count(), tags.Count);
+            Assert.AreEqual(_context.Tags.Count(), tags.Count());
             Assert.IsTrue(tags.Any(t => t.Name == tag1.Name));
             Assert.IsTrue(tags.Any(t => t.Name == tag2.Name));
             Assert.IsTrue(tags.Any(t => t.Name == tag3.Name));
         }
 
         [Test]
-        public void GetTagByUrlSlug_ShouldReturnCorrectTag()
+        public async Task GetTagByUrlSlug_ShouldReturnCorrectTag()
         {
             // Arrange
             var tag = new Tag
@@ -140,14 +156,21 @@ namespace FA.JustBlog.UnitTest
                 Description = "Test Description",
                 Count = 0
             };
-            _tagRepository.AddTag(tag);
+            await _tagRepository.AddAsync(tag);
 
             // Act
-            var retrievedTag = _tagRepository.GetTagByUrlSlug(tag.UrlSlug);
+            var retrievedTag = await _tagRepository.GetTagByUrlSlugAsync(tag.UrlSlug);
 
             // Assert
             Assert.NotNull(retrievedTag);
             Assert.AreEqual(tag.Name, retrievedTag.Name);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            // Clean up the in-memory database after each test
+            _context.Database.EnsureDeleted();
         }
     }
 }

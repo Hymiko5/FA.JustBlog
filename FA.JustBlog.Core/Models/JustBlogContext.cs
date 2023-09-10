@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols;
 using System;
 using System.Collections.Generic;
@@ -8,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace FA.JustBlog.Core.Models
 {
-    public class JustBlogContext:DbContext
+    public class JustBlogContext: IdentityDbContext<AppUser, AppRole, Guid>
     {
         //private readonly string _connectionString;
         public JustBlogContext()
@@ -38,14 +40,10 @@ namespace FA.JustBlog.Core.Models
 
         public virtual DbSet<Comment> Comments { get; set; }
 
-        //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //{
-
-        //    optionsBuilder.UseSqlServer("Server=.;Initial Catalog=JustBlogDB;Trusted_Connection=True;Integrated Security=True;TrustServerCertificate=True;");
-        //}
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<PostTagMap>().HasKey(pt => new { pt.PostId, pt.TagId });
             modelBuilder.Entity<PostTagMap>().HasOne(pt => pt.Post)
                 .WithMany(p => p.PostTagMaps)
@@ -106,6 +104,10 @@ namespace FA.JustBlog.Core.Models
                 new PostTagMap { PostId = 2, TagId = 3 },
                 new PostTagMap { PostId = 3, TagId = 1 }
                 );
+            DataInitializer.SeedUsers(modelBuilder);
+            DataInitializer.SeedRoles(modelBuilder);
+            DataInitializer.SeedUserRoles(modelBuilder);
+            
         }
     }
 }

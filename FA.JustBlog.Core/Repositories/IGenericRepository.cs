@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FA.JustBlog.Core.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -9,17 +10,19 @@ namespace FA.JustBlog.Core.Repositories
 {
     public interface IGenericRepository<T> where T : class
     {
-        int Add(T entity);
-        T GetById(object id);
-        T Update(T entity);
-        int Delete(int id);
-        IEnumerable<T> All();
-        IEnumerable<T> Find(Expression<Func<T, bool>> predicate);
+        Task AddAsync(T entity);
+        Task<T> GetByIdAsync(int id);
+        void Update(T entity);
+        Task DeleteAsync(int id);
+        void Delete(T entity);
+        Task<int> CountAsync(Expression<Func<T, bool>> filter);
+        Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
 
-        IEnumerable<T> GetAllInclude(params string[] includeProps);
-        IEnumerable<T> GetInclude(Expression<Func<T, bool>> filter, params string[] includeProps);
+        Task<IEnumerable<T>> GetAllIncludeAsync(params string[] includeProps);
+        Task<IEnumerable<T>> GetIncludeAsync(Expression<Func<T, bool>> filter, params string[] includeProps);
 
-        T FirstOrDefault(Expression<Func<T, bool>> filter);
-        T FirstOrDefaultInclude(Expression<Func<T, bool>> filter, params string[] includeProps);
+        Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> filter);
+        Task<T> FirstOrDefaultIncludeAsync(Expression<Func<T, bool>> filter, params string[] includeProps);
     }
 }

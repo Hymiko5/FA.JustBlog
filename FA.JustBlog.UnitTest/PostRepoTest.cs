@@ -1,6 +1,8 @@
-﻿using FA.JustBlog.Core.Models;
+﻿using FA.JustBlog.Core.Infrastructure;
+using FA.JustBlog.Core.Models;
 using FA.JustBlog.Core.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Moq;
 using NUnit.Framework.Interfaces;
 using System;
@@ -17,24 +19,30 @@ namespace FA.JustBlog.UnitTest
     public class PostRepoTest
     {
         private JustBlogContext _context;
-        private Mock<JustBlogContext> _contextMock;
-        private PostRepository _postRepositoryMock;
+        private IGenericRepository<Post> _genericRepository;
+        private UnitOfWork _unitOfWork;
         private PostRepository _postRepository;
-
         [SetUp]
-        public void Setup()
+        public async Task Setup()
         {
-            // Initialize and configure your DbContext mock
-            _contextMock = new Mock<JustBlogContext>();
+            // Create an options builder for an in-memory database
+            var options = new DbContextOptionsBuilder<JustBlogContext>()
+                .UseInMemoryDatabase(databaseName: "InMemoryDatabase")
+                .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+                .Options;
 
-            // Initialize the repository with the mock context
-            _postRepositoryMock = new PostRepository(_contextMock.Object);
-            _context = new JustBlogContext();
-            _postRepository = new PostRepository(_context);
+            // Create an instance of the in-memory database context
+            _context = new JustBlogContext(options);
+
+            // Initialize the database with test data
+            _context.Database.EnsureCreated();
+            _genericRepository = new GenericRepository<Post>(_context);
+            _unitOfWork = new UnitOfWork(_context);
+            _postRepository = new PostRepository(_genericRepository, _unitOfWork);
         }
 
         [Test]
-        public void AddPost_ShouldAddPostToDatabase()
+        public async Task AddPost_ShouldAddPostToDatabase()
         {
             // Arrange
             var post = new Post
@@ -47,7 +55,6 @@ namespace FA.JustBlog.UnitTest
                 PostedOn = DateTime.Now,
                 Modified = false,
                 CategoryId = 1,
-                Category = new Category(),
                 PostTagMaps = new List<PostTagMap>(),
                 ViewCount = 0,
                 RateCount = 0,
@@ -55,16 +62,16 @@ namespace FA.JustBlog.UnitTest
             };
 
             // Act
-            _postRepository.AddPost(post);
+            await _postRepository.AddAsync(post);
 
             // Assert
-            var addedPost = _postRepository.FindPost(post.Id);
+            var addedPost = await _postRepository.GetByIdAsync(post.Id);
             Assert.NotNull(addedPost);
             Assert.AreEqual(post.Title, addedPost.Title);
         }
 
         [Test]
-        public void UpdatePost_ShouldUpdatePostInDatabase()
+        public async Task UpdatePost_ShouldUpdatePostInDatabase()
         {
             // Arrange
             var post = new Post
@@ -77,25 +84,24 @@ namespace FA.JustBlog.UnitTest
                 PostedOn = DateTime.Now,
                 Modified = false,
                 CategoryId = 1,
-                Category = new Category(),
                 PostTagMaps = new List<PostTagMap>(),
                 ViewCount = 0,
                 RateCount = 0,
                 TotalRate = 0
             };
-            _postRepository.AddPost(post);
+            await _postRepository.AddAsync(post);
             // Act
             post.Title = "Updated Post";
-            _postRepository.UpdatePost(post);
+            await _postRepository.UpdateAsync(post);
 
             // Assert
-            var updatedPost = _postRepository.FirstOrDefault(p => p.Id == post.Id);
+            var updatedPost = await _postRepository.GetByIdAsync(post.Id);
             Assert.NotNull(updatedPost);
             Assert.AreEqual(post.Title, updatedPost.Title);
         }
 
         [Test]
-        public void DeletePost_ShouldDeletePostFromDatabase()
+        public async Task DeletePost_ShouldDeletePostFromDatabase()
         {
             // Arrange
             var post = new Post
@@ -108,24 +114,23 @@ namespace FA.JustBlog.UnitTest
                 PostedOn = DateTime.Now,
                 Modified = false,
                 CategoryId = 1,
-                Category = new Category(),
                 PostTagMaps = new List<PostTagMap>(),
                 ViewCount = 0,
                 RateCount = 0,
                 TotalRate = 0
             };
-            _postRepository.AddPost(post);
+            await _postRepository.AddAsync(post);
 
             // Act
-            _postRepository.DeletePost(post);
+            await _postRepository.DeleteAsync(post);
 
             // Assert
-            var deletedPost = _postRepository.FindPost(post.Id);
+            var deletedPost = await _postRepository.GetByIdAsync(post.Id);
             Assert.Null(deletedPost);
         }
 
         [Test]
-        public void GetPublishedPosts_ShouldReturnPublishedPosts()
+        public async Task GetPublishedPosts_ShouldReturnPublishedPosts()
         {
             // Arrange
             var post1 = new Post
@@ -138,7 +143,6 @@ namespace FA.JustBlog.UnitTest
                 PostedOn = DateTime.Now,
                 Modified = false,
                 CategoryId = 1, // Replace with an actual category ID
-                Category = new Category(), // Create a Category instance
                 PostTagMaps = new List<PostTagMap>(), // Create a list of PostTagMap if needed
                 ViewCount = 0,
                 RateCount = 0,
@@ -155,7 +159,6 @@ namespace FA.JustBlog.UnitTest
                 PostedOn = DateTime.Now,
                 Modified = false,
                 CategoryId = 2, // Replace with an actual category ID
-                Category = new Category(), // Create a Category instance
                 PostTagMaps = new List<PostTagMap>(), // Create a list of PostTagMap if needed
                 ViewCount = 0,
                 RateCount = 0,
@@ -172,19 +175,18 @@ namespace FA.JustBlog.UnitTest
                 PostedOn = DateTime.Now,
                 Modified = false,
                 CategoryId = 1, // Replace with an actual category ID
-                Category = new Category(), // Create a Category instance
                 PostTagMaps = new List<PostTagMap>(), // Create a list of PostTagMap if needed
                 ViewCount = 0,
                 RateCount = 0,
                 TotalRate = 0
             };
 
-            _postRepository.AddPost(post1);
-            _postRepository.AddPost(post2);
-            _postRepository.AddPost(post3);
+            await _postRepository.AddAsync(post1);
+            await _postRepository.AddAsync(post2);
+            await _postRepository.AddAsync(post3);
 
             // Act
-            var publishedPosts = _postRepository.GetPublishedPosts();
+            var publishedPosts = await _postRepository.GetPublishedPostsAsync();
 
             // Assert
             Assert.IsTrue(publishedPosts.Any(p => p.Title == post1.Title));
@@ -193,236 +195,213 @@ namespace FA.JustBlog.UnitTest
         }
 
         [Test]
-        public void GetUnpublishedPosts_ShouldReturnUnpublishedPosts()
+        public async Task GetUnpublishedPosts_ShouldReturnUnpublishedPosts()
         {
             // Arrange
             var testData = new List<Post>
         {
-            new Post { Id = 1, Published = true },
-            new Post { Id = 2, Published = false },
-            new Post { Id = 3, Published = false }
-        }.AsQueryable();
-            Mock<DbSet<Post>> mockDbSet = new Mock<DbSet<Post>>();
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Provider).Returns(testData.Provider);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Expression).Returns(testData.Expression);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.ElementType).Returns(testData.ElementType);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.GetEnumerator()).Returns(() => testData.GetEnumerator());
-            _contextMock.Setup(c => c.Posts).Returns(mockDbSet.Object);
-
+            new Post {  Published = true, Title = "Title 1" },
+            new Post {  Published = false, Title = "Title 1" },
+            new Post { Published = false, Title = "Title 1" }
+        };
+            await _postRepository.AddAsync(testData[0]);
+            await _postRepository.AddAsync(testData[1]);
+            await _postRepository.AddAsync(testData[2]);
             // Act
-            var result = _postRepositoryMock.GetUnpublishedPosts();
+            var result = await _postRepository.GetUnpublishedPostsAsync();
 
             // Assert
-            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(3, result.Count());
             Assert.IsFalse(result.Any(p => p.Published));
         }
 
         [Test]
-        public void GetLatestPosts_ShouldReturnLatestPosts()
+        public async Task GetLatestPosts_ShouldReturnLatestPosts()
         {
             // Arrange
             var testData = new List<Post>
         {
-            new Post { Id = 1, Published = true, PostedOn = DateTime.Now.AddDays(-1) },
-            new Post { Id = 2, Published = true, PostedOn = DateTime.Now.AddDays(-2) },
-            new Post { Id = 3, Published = true, PostedOn = DateTime.Now.AddDays(-3) }
-        }.AsQueryable();
-            Mock<DbSet<Post>> mockDbSet = new Mock<DbSet<Post>>();
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Provider).Returns(testData.Provider);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Expression).Returns(testData.Expression);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.ElementType).Returns(testData.ElementType);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.GetEnumerator()).Returns(() => testData.GetEnumerator());
-            _contextMock.Setup(c => c.Posts).Returns(mockDbSet.Object);
+            new Post { Id = 4, Published = true, PostedOn = DateTime.Now.AddDays(-1), Title = "Title 1" },
+            new Post { Id = 5, Published = true, PostedOn = DateTime.Now.AddDays(-2), Title = "Title 1" },
+            new Post { Id = 6, Published = true, PostedOn = DateTime.Now.AddDays(-3) , Title = "Title 1"}
+        };
 
+            await _postRepository.AddAsync(testData[0]);
+            await _postRepository.AddAsync(testData[1]);
+            await _postRepository.AddAsync(testData[2]);
             // Act
-            var result = _postRepositoryMock.GetLatestPosts(2);
+            var result = await _postRepository.GetLatestPostsAsync(2);
 
             // Assert
-            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(2, result.Count());
             Assert.IsTrue(result.All(p => p.Published));
-            Assert.AreEqual(1, result[0].Id); // Assuming the ordering is descending by PostedOn
-            Assert.AreEqual(2, result[1].Id);
+            Assert.AreEqual(4, result.ToArray()[0].Id); // Assuming the ordering is descending by PostedOn
+            Assert.AreEqual(5, result.ToArray()[1].Id);
         }
 
         [Test]
-        public void GetPostsByMonth_ShouldReturnPostsForGivenMonth()
+        public async Task GetPostsByMonth_ShouldReturnPostsForGivenMonth()
         {
             // Arrange
             var testData = new List<Post>
         {
-            new Post { Id = 1, Published = true, PostedOn = new DateTime(2023, 8, 15) },
-            new Post { Id = 2, Published = true, PostedOn = new DateTime(2023, 8, 20) },
-            new Post { Id = 3, Published = true, PostedOn = new DateTime(2023, 9, 5) }
-        }.AsQueryable();
-            Mock<DbSet<Post>> mockDbSet = new Mock<DbSet<Post>>();
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Provider).Returns(testData.Provider);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Expression).Returns(testData.Expression);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.ElementType).Returns(testData.ElementType);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.GetEnumerator()).Returns(() => testData.GetEnumerator());
-            _contextMock.Setup(c => c.Posts).Returns(mockDbSet.Object);
+            new Post {  Published = true, PostedOn = new DateTime(2023, 8, 15), Title = "Title 1" },
+            new Post { Published = true, PostedOn = new DateTime(2023, 8, 20), Title = "Title 1" },
+            new Post {  Published = true, PostedOn = new DateTime(2023, 9, 5), Title = "Title 1" }
+        };
+            await _postRepository.AddAsync(testData[0]);
+            await _postRepository.AddAsync(testData[1]);
+            await _postRepository.AddAsync(testData[2]);
 
             // Act
-            var result = _postRepository.GetPostsByMonth(new DateTime(2023, 8, 1));
+            var result = await _postRepository.GetPostsByMonthAsync(new DateTime(2023, 8, 1));
 
             // Assert
-            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(2, result.Count());
             Assert.IsTrue(result.All(p => p.Published));
             Assert.IsTrue(result.All(p => p.PostedOn.Month == 8));
         }
 
         [Test]
-        public void CountPostsForCategory_ShouldReturnCountOfPostsForCategory()
+        public async Task CountPostsForCategory_ShouldReturnCountOfPostsForCategory()
         {
             // Arrange
             var testData = new List<Post>
         {
-            new Post { Id = 1, Published = true, Category = new Category { Name = "CategoryA" } },
-            new Post { Id = 2, Published = true, Category = new Category { Name = "CategoryA" } },
-            new Post { Id = 3, Published = true, Category = new Category { Name = "CategoryB" } }
-        }.AsQueryable();
-            Mock<DbSet<Post>> mockDbSet = new Mock<DbSet<Post>>();
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Provider).Returns(testData.Provider);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Expression).Returns(testData.Expression);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.ElementType).Returns(testData.ElementType);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.GetEnumerator()).Returns(() => testData.GetEnumerator());
-            _contextMock.Setup(c => c.Posts).Returns(mockDbSet.Object);
+            new Post { Id = 6, Published = true, Category = new Category { Name = "CategoryA" }, Title = "Title1" },
+            new Post { Id = 7, Published = true, Category = new Category { Name = "CategoryA" }, Title = "Title1" },
+            new Post { Id = 8, Published = true, Category = new Category { Name = "CategoryB" }, Title = "Title1" }
+        };
+            await _postRepository.AddAsync(testData[0]);
+            await _postRepository.AddAsync(testData[1]);
+            await _postRepository.AddAsync(testData[2]);
 
             // Act
-            var result = _postRepositoryMock.CountPostsForCategory("CategoryA");
+            var result = await _postRepository.CountPostsForCategoryAsync("CategoryA");
 
             // Assert
             Assert.AreEqual(2, result);
         }
 
         [Test]
-        public void GetPostsByCategory_ShouldReturnPostsForCategory()
+        public async Task GetPostsByCategory_ShouldReturnPostsForCategory()
         {
             // Arrange
             var testData = new List<Post>
         {
-            new Post { Id = 1, Published = true, Category = new Category { Name = "CategoryA" } },
-            new Post { Id = 2, Published = true, Category = new Category { Name = "CategoryA" } },
-            new Post { Id = 3, Published = true, Category = new Category { Name = "CategoryB" } }
-        }.AsQueryable();
-            Mock<DbSet<Post>> mockDbSet = new Mock<DbSet<Post>>();
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Provider).Returns(testData.Provider);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Expression).Returns(testData.Expression);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.ElementType).Returns(testData.ElementType);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.GetEnumerator()).Returns(() => testData.GetEnumerator());
-            _contextMock.Setup(c => c.Posts).Returns(mockDbSet.Object);
+            new Post {Published = true, Category = new Category { Name = "CategoryA" } , Title = "Title 1"},
+            new Post {Published = true, Category = new Category { Name = "CategoryA" }, Title = "Title 1" },
+            new Post {Published = true, Category = new Category { Name = "CategoryB" }, Title = "Title 1" }
+        };
+            await _postRepository.AddAsync(testData[0]);
+            await _postRepository.AddAsync(testData[1]);
+            await _postRepository.AddAsync(testData[2]);
 
             // Act
-            var result = _postRepositoryMock.GetPostsByCategory("CategoryA");
+            var result = await _postRepository.GetPostsByCategoryAsync("CategoryA");
 
             // Assert
-            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(2, result.Count());
             Assert.IsTrue(result.All(p => p.Published));
             Assert.IsTrue(result.All(p => p.Category.Name == "CategoryA"));
         }
 
         [Test]
-        public void CountPostsForTag_ShouldReturnCountOfPostsForTag()
+        public async Task CountPostsForTag_ShouldReturnCountOfPostsForTag()
         {
             // Arrange
             var testData = new List<Post>
         {
-            new Post { Id = 1, Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagA" } } } },
-            new Post { Id = 2, Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagA" } } } },
-            new Post { Id = 3, Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagB" } } } }
-        }.AsQueryable();
-            Mock<DbSet<Post>> mockDbSet = new Mock<DbSet<Post>>();
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Provider).Returns(testData.Provider);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Expression).Returns(testData.Expression);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.ElementType).Returns(testData.ElementType);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.GetEnumerator()).Returns(() => testData.GetEnumerator());
-            _contextMock.Setup(c => c.Posts).Returns(mockDbSet.Object);
+            new Post {Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagA" } } }, Title = "Title 1" },
+            new Post {Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagA" } } }, Title = "Title 1" },
+            new Post {Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagB" } } }, Title = "Title 1" }
+        };
+            await _postRepository.AddAsync(testData[0]);
+            await _postRepository.AddAsync(testData[1]);
+            await _postRepository.AddAsync(testData[2]);
 
             // Act
-            var result = _postRepositoryMock.CountPostsForTag("TagA");
+            var result = await _postRepository.CountPostsForTagAsync("TagA");
 
             // Assert
             Assert.AreEqual(2, result);
         }
 
         [Test]
-        public void GetPostsByTag_ShouldReturnPostsForTag()
+        public async Task GetPostsByTag_ShouldReturnPostsForTag()
         {
             // Arrange
             var testData = new List<Post>
         {
-            new Post { Id = 1, Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagA" } } } },
-            new Post { Id = 2, Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagA" } } } },
-            new Post { Id = 3, Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagB" } } } }
-        }.AsQueryable();
-            Mock<DbSet<Post>> mockDbSet = new Mock<DbSet<Post>>();
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Provider).Returns(testData.Provider);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Expression).Returns(testData.Expression);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.ElementType).Returns(testData.ElementType);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.GetEnumerator()).Returns(() => testData.GetEnumerator());
-            _contextMock.Setup(c => c.Posts).Returns(mockDbSet.Object);
+            new Post {Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagA" } } }, Title = "Title 1" },
+            new Post {Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagA" } } }, Title = "Title 1" },
+            new Post {Published = true, PostTagMaps = new List<PostTagMap> { new PostTagMap { Tag = new Tag { Name = "TagB" } } }, Title = "Title 1" }
+        };
+            await _postRepository.AddAsync(testData[0]);
+            await _postRepository.AddAsync(testData[1]);
+            await _postRepository.AddAsync(testData[2]);
 
             // Act
-            var result = _postRepositoryMock.GetPostsByTag("TagA");
+            var result = await _postRepository.GetPostsByTagAsync("TagA");
 
             // Assert
-            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(2, result.Count());
             Assert.IsTrue(result.All(p => p.Published));
             Assert.IsTrue(result.All(p => p.PostTagMaps.Any(pt => pt.Tag.Name == "TagA")));
         }
 
         [Test]
-        public void GetMostViewedPost_ShouldReturnMostViewedPosts()
+        public async Task GetMostViewedPost_ShouldReturnMostViewedPosts()
         {
             // Arrange
             var testData = new List<Post>
         {
-            new Post { Id = 1, Published = true, ViewCount = 100 },
-            new Post { Id = 2, Published = true, ViewCount = 200 },
-            new Post { Id = 3, Published = true, ViewCount = 50 }
-        }.AsQueryable();
-            Mock<DbSet<Post>> mockDbSet = new Mock<DbSet<Post>>();
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Provider).Returns(testData.Provider);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Expression).Returns(testData.Expression);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.ElementType).Returns(testData.ElementType);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.GetEnumerator()).Returns(() => testData.GetEnumerator());
-            _contextMock.Setup(c => c.Posts).Returns(mockDbSet.Object);
+            new Post { Id = 4, Published = true, ViewCount = 100, Title = "Title 1" },
+            new Post { Id = 5, Published = true, ViewCount = 200, Title = "Title 1" },
+            new Post { Id = 6, Published = true, ViewCount = 50, Title = "Title 1" }
+            };
+            await _postRepository.AddAsync(testData[0]);
+            await _postRepository.AddAsync(testData[1]);
+            await _postRepository.AddAsync(testData[2]);
 
             // Act
-            var result = _postRepositoryMock.GetMostViewedPost(2);
+            var result = await _postRepository.GetMostViewedPostAsync(2);
 
             // Assert
-            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(2, result.Count());
             Assert.IsTrue(result.All(p => p.Published));
-            Assert.AreEqual(2, result[0].Id); // Assuming the ordering is descending by ViewCount
-            Assert.AreEqual(1, result[1].Id);
+            Assert.AreEqual(5, result.ToArray()[0].Id); // Assuming the ordering is descending by ViewCount
+            Assert.AreEqual(4, result.ToArray()[1].Id);
         }
 
         [Test]
-        public void GetHighestPosts_ShouldReturnHighestRatedPosts()
+        public async Task GetHighestPosts_ShouldReturnHighestRatedPosts()
         {
             // Arrange
             var testData = new List<Post>
         {
-            new Post { Id = 1, Published = true, RateCount = 5, TotalRate = 25 },
-            new Post { Id = 2, Published = true, RateCount = 3, TotalRate = 14 },
-            new Post { Id = 3, Published = true, RateCount = 4, TotalRate = 20 }
-        }.AsQueryable();
-            Mock<DbSet<Post>> mockDbSet = new Mock<DbSet<Post>>();
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Provider).Returns(testData.Provider);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.Expression).Returns(testData.Expression);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.ElementType).Returns(testData.ElementType);
-            mockDbSet.As<IQueryable<Post>>().Setup(m => m.GetEnumerator()).Returns(() => testData.GetEnumerator());
-            _contextMock.Setup(c => c.Posts).Returns(mockDbSet.Object);
+            new Post {Id = 4, Published = true, RateCount = 5, TotalRate = 25, Title = "Title 1" },
+            new Post {Id = 5, Published = true, RateCount = 3, TotalRate = 14, Title = "Title 1" },
+            new Post {Id = 6, Published = true, RateCount = 4, TotalRate = 20, Title = "Title 1" }
+        };
+            await _postRepository.AddAsync(testData[0]);
+            await _postRepository.AddAsync(testData[1]);
+            await _postRepository.AddAsync(testData[2]);
 
             // Act
-            var result = _postRepositoryMock.GetHighestPosts(2);
+            var result = await _postRepository.GetHighestPostsAsync(2);
 
             // Assert
-            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual(2, result.Count());
             Assert.IsTrue(result.All(p => p.Published));
-            Assert.AreEqual(1, result[0].Id); // Assuming the ordering is descending by Rate
-            Assert.AreEqual(3, result[1].Id);
+            Assert.AreEqual(4, result.ToArray()[0].Id); // Assuming the ordering is descending by Rate
+            Assert.AreEqual(6, result.ToArray()[1].Id);
         }
-
+        [TearDown]
+        public void TearDown()
+        {
+            // Clean up the in-memory database after each test
+            _context.Database.EnsureDeleted();
+        }
     }
 }

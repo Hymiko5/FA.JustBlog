@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace JustBlog.MVC.Controllers
 {
+   
     public class CategoryController : Controller
     {
         private readonly ICategoryRepository repository;

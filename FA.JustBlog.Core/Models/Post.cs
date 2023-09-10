@@ -52,6 +52,7 @@ namespace FA.JustBlog.Core.Models
         /// Category id.
         /// </summary>
         [ForeignKey("Category")]
+        [Display(Name ="Category")]
         public int CategoryId { get; set; }
         /// <summary>
         /// Category instance.

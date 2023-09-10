@@ -1,4 +1,5 @@
-﻿using FA.JustBlog.Core.Models;
+﻿using FA.JustBlog.Core.Infrastructure;
+using FA.JustBlog.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -12,41 +13,43 @@ namespace FA.JustBlog.Core.Repositories
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class, IEntity
     {
-        private readonly JustBlogContext _context;
-
-        private DbSet<T> _dbSet;
+        private JustBlogContext context;
+        private readonly DbSet<T> dbSet;
 
         public GenericRepository(JustBlogContext context)
         {
-            _context = context;
-            _dbSet = _context.Set<T>();
+            this.context = context;
+            dbSet = context.Set<T>();
         }
-        public virtual IEnumerable<T> All()
+        public async virtual Task<IEnumerable<T>> GetAllAsync()
         {
-            return _dbSet.AsNoTracking();
-        }
-
-        public virtual int Delete(int id)
-        {
-            var entity = GetById(id);
-            _dbSet.Remove(entity);
-            _context.SaveChanges();
-            return entity.Id;
+            return await dbSet.ToListAsync();
         }
 
-        public virtual IEnumerable<T> Find(Expression<Func<T, bool>> predicate)
+        public virtual async Task DeleteAsync(int id)
         {
-            return _dbSet.Where(predicate);
+            var entity = await GetByIdAsync(id);
+            dbSet.Remove(entity);
         }
 
-        public virtual T FirstOrDefault(Expression<Func<T, bool>> filter)
+        public void Delete(T entity)
         {
-            return _dbSet.FirstOrDefault(filter);
+            dbSet.Remove(entity);
         }
 
-        public virtual T FirstOrDefaultInclude(Expression<Func<T, bool>> filter, params string[] includeProps)
+        public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
         {
-            var query = _dbSet.AsQueryable();
+            return await dbSet.Where(predicate).ToListAsync();
+        }
+
+        public virtual async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> filter)
+        {
+            return await dbSet.FirstOrDefaultAsync(filter);
+        }
+
+        public virtual async Task<T?> FirstOrDefaultIncludeAsync(Expression<Func<T, bool>> filter, params string[] includeProps)
+        {
+            var query = dbSet.AsQueryable();
             if (includeProps.Length > 0)
             {
                 foreach (var prop in includeProps)
@@ -54,17 +57,17 @@ namespace FA.JustBlog.Core.Repositories
                     query = query.Include(prop);
                 }
             }
-            return query.FirstOrDefault(filter);
+            return await query.FirstOrDefaultAsync(filter);
         }
 
-        public virtual T GetById(object id)
+        public async virtual Task<T?> GetByIdAsync(int id)
         {
-            return _dbSet.Find(id) ?? throw new NullReferenceException($"Cannot find entity id: {id}");
+            return await dbSet.FindAsync(id);
         }
 
-        public virtual IEnumerable<T> GetAllInclude(params string[] includeProps)
+        public async virtual Task<IEnumerable<T>> GetAllIncludeAsync(params string[] includeProps)
         {
-            var query = _dbSet.AsQueryable();
+            var query = dbSet.AsQueryable();
             if (includeProps.Length > 0)
             {
                 foreach (var prop in includeProps)
@@ -72,13 +75,13 @@ namespace FA.JustBlog.Core.Repositories
                     query = query.Include(prop);
                 }
             }
-            return query.ToList();
+            return await query.ToListAsync();
         }
 
-        public virtual IEnumerable<T> GetInclude(Expression<Func<T, bool>> filter, params string[] includeProps)
+        public virtual async Task<IEnumerable<T>> GetIncludeAsync(Expression<Func<T, bool>> filter, params string[] includeProps)
         {
 
-            var query = _dbSet.AsQueryable();
+            var query = dbSet.AsQueryable();
             if (includeProps.Length > 0)
             {
                 foreach (var prop in includeProps)
@@ -86,23 +89,24 @@ namespace FA.JustBlog.Core.Repositories
                     query = query.Include(prop);
                 }
             }
-            return query.Where(filter).ToList();
+            return await query.Where(filter).ToListAsync();
         }
 
-        public virtual int Add(T entity)
+        public async virtual Task AddAsync(T entity)
         {
-            _dbSet.Add(entity);
-            _context.SaveChanges();
-
-            return entity.Id;
+            var result = await dbSet.AddAsync(entity);
+            Console.WriteLine(result);
         }
 
-        public virtual T Update(T entity)
+        public virtual void Update(T entity)
         {
-            _dbSet.Attach(entity);
-            _context.Entry(entity).State = EntityState.Modified;
-            _context.SaveChanges();
-            return entity;
+            dbSet.Attach(entity);
+            context.Entry(entity).State = EntityState.Modified;
+        }
+
+        public async Task<int> CountAsync(Expression<Func<T, bool>> filter)
+        {
+            return await dbSet.CountAsync(filter);
         }
     }
 }
